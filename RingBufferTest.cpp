@@ -16,7 +16,8 @@ public:
    }
    void display()
    {
- 	printf("%s", data);
+ 	// printf("%s", data);
+     strncpy(data, "hello", 5);
    }
 private:
    int id;
@@ -31,6 +32,8 @@ double getdetlatimeofday(struct timeval *begin, struct timeval *end)
 }
 
 RingBuffer<Test> queue(1 << 10);
+// IPC ShareMemory, key=0x01
+// RingBuffer<Test> queue(1 << 10, 0x01);
 
 #define N (10 * (1 << 20))
 
@@ -43,7 +46,7 @@ void produce()
     {
         if(queue.push(Test(i >> 10, i)))
         {
-	   i++;
+	    i++;
         }
     }
     gettimeofday(&end, NULL);
@@ -61,10 +64,10 @@ void consume()
     while(i < N)
     {
         if(queue.pop(test))
-	{
-	   //test.display();
-	   i++;
-	}
+        {
+           test.display();
+        i++;
+        }
     }
     gettimeofday(&end, NULL);
     double tm = getdetlatimeofday(&begin, &end);
@@ -74,11 +77,17 @@ void consume()
 int main(int argc, char const *argv[])
 {
     std::thread producer1(produce);
-    std::thread consumer(consume);
+    // std::thread consumer(consume);
     producer1.join();
-    consumer.join();
+    // consumer.join();
     return 0;
 }
 
+// test RingBuffer for Heap Memory
+// g++ -g --std=c++11 RingBufferTest.cpp -o test -pthread
+// test RingBuffer for different Process
+// RingBuffer<Test> queue(1 << 10, 0x01);
+// g++ -g --std=c++11 RingBufferTest.cpp -o producer -pthread
+// g++ -g --std=c++11 RingBufferTest.cpp -o consumer -pthread
 
 
