@@ -21,14 +21,12 @@ public:
         }
         else
         {
-            int shmid = shmid = shmget(m_key, size * sizeof(T) + sizeof(int) * 2, 0666 | IPC_CREAT);
+            int shmid = shmget(m_key, size * sizeof(T) + sizeof(int) * 2, 0666 | IPC_CREAT);
             m_data = static_cast<T*>(shmat(shmid, 0, 0));
-            memset(m_data, 0, size * sizeof(T) + sizeof(int) * 2);
             m_front = (int*)(m_data + m_size);
             m_rear = (int*)((m_data + m_size) + sizeof(int));
-            printf("shmid= %d, size= %d\n", shmid, size * sizeof(T) + sizeof(int) * 2);
+            // printf("shmid= %d, size= %d\n", shmid, size * sizeof(T) + sizeof(int) * 2);
         }
-        
     }
 
     ~RingBuffer()
@@ -47,6 +45,20 @@ public:
 	    m_data = NULL;
         m_front = NULL;
         m_rear = NULL;
+    }
+
+    inline void reset()
+    {
+        if(m_key == 0)
+        {
+            memset(m_data, 0, m_size * sizeof(T));
+            *m_front = 0;
+            *m_rear = 0;
+        }
+        else
+        {
+            memset(m_data, 0, m_size * sizeof(T) + sizeof(int) * 2);
+        }
     }
 
     inline bool isEmpty() const

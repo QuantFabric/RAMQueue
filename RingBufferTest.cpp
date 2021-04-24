@@ -10,14 +10,14 @@ class Test
 public:
    Test(int id = 0, int value = 0)
    {
-	this->id = id;
+	    this->id = id;
         this->value = value;
-	sprintf(data, "id = %d, value = %d\n", this->id, this->value);
+	    sprintf(data, "id = %d, value = %d\n", this->id, this->value);
    }
    void display()
    {
- 	// printf("%s", data);
-     strncpy(data, "hello", 5);
+ 	    // printf("%s", data);
+        strncpy(data, "hello", 5);
    }
 private:
    int id;
@@ -31,14 +31,15 @@ double getdetlatimeofday(struct timeval *begin, struct timeval *end)
            (begin->tv_sec + begin->tv_usec * 1.0 / 1000000);
 }
 
-RingBuffer<Test> queue(1 << 10);
+// RingBuffer<Test> queue(1 << 10);
 // IPC ShareMemory, key=0x01
-// RingBuffer<Test> queue(1 << 10, 0x01);
+RingBuffer<Test> queue(1 << 10, 0x01);
 
 #define N (10 * (1 << 20))
 
 void produce()
 {
+    queue.reset();
     struct timeval begin, end;
     gettimeofday(&begin, NULL);
     unsigned int i = 0;
@@ -46,7 +47,7 @@ void produce()
     {
         if(queue.push(Test(i >> 10, i)))
         {
-	    i++;
+	        i++;
         }
     }
     gettimeofday(&end, NULL);
@@ -76,18 +77,18 @@ void consume()
 
 int main(int argc, char const *argv[])
 {
-    std::thread producer1(produce);
-    // std::thread consumer(consume);
-    producer1.join();
-    // consumer.join();
+    // std::thread producer1(produce);
+    std::thread consumer(consume);
+    // producer1.join();
+    consumer.join();
     return 0;
 }
 
 // test RingBuffer for Heap Memory
-// g++ -g --std=c++11 RingBufferTest.cpp -o test -pthread
+// g++ --std=c++11 RingBufferTest.cpp -o test -pthread
 // test RingBuffer for different Process
 // RingBuffer<Test> queue(1 << 10, 0x01);
-// g++ -g --std=c++11 RingBufferTest.cpp -o producer -pthread
-// g++ -g --std=c++11 RingBufferTest.cpp -o consumer -pthread
+// g++ --std=c++11 RingBufferTest.cpp -o producer -pthread
+// g++ --std=c++11 RingBufferTest.cpp -o consumer -pthread
 
 
