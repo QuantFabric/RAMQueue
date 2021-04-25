@@ -31,9 +31,9 @@ double getdetlatimeofday(struct timeval *begin, struct timeval *end)
            (begin->tv_sec + begin->tv_usec * 1.0 / 1000000);
 }
 
-// RingBuffer<Test> queue(1 << 10);
+RingBuffer<Test> queue(1 << 10);
 // IPC ShareMemory, key=0x01
-RingBuffer<Test> queue(1 << 10, 0x01);
+// RingBuffer<Test> queue(1 << 10, 0x01);
 
 #define N (10 * (1 << 20))
 
@@ -57,7 +57,7 @@ void produce()
 
 void consume()
 {
-    // usleep(2000);
+    usleep(2000);
     Test test;
     struct timeval begin, end;
     gettimeofday(&begin, NULL);
@@ -77,9 +77,9 @@ void consume()
 
 int main(int argc, char const *argv[])
 {
-    // std::thread producer1(produce);
+    std::thread producer1(produce);
     std::thread consumer(consume);
-    // producer1.join();
+    producer1.join();
     consumer.join();
     return 0;
 }

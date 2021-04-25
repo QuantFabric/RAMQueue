@@ -1,25 +1,22 @@
 #include "LockFreeQueue.hpp"
 #include <thread>
 
-//#define USE_LOCK
-#define USE_POT
-#define USE_MB
 
 class Test
 {
 public:
    Test(int id = 0, int value = 0)
    {
-	this->id = id;
+	    this->id = id;
         this->value = value;
-	sprintf(data, "id = %d, value = %d\n", this->id, this->value);
+	    sprintf(data, "id = %lu, value = %d", this->id, this->value);
    }
    void display()
    {
- 	printf("%s", data);
+        printf("%s\n", data);
    }
 private:
-   int id;
+   unsigned int id;
    int value;
    char data[128];
 };
@@ -30,7 +27,10 @@ double getdetlatimeofday(struct timeval *begin, struct timeval *end)
            (begin->tv_sec + begin->tv_usec * 1.0 / 1000000);
 }
 
-LockFreeQueue<Test> queue(1 << 10);
+// multi thread in one process
+LockFreeQueue<Test> queue(1 << 20);
+// IPC ShareMemory
+// LockFreeQueue<Test> queue(1 << 10, 0x02);
 
 #define N (10 * (1 << 20))
 
@@ -39,10 +39,11 @@ void produce()
     struct timeval begin, end;
     gettimeofday(&begin, NULL);
     unsigned int i = 0;
+    unsigned int tid = pthread_self();
     while(i < N)
     {
-        if(queue.push(Test(i >> 10, i)))
-	    i++;
+        if(queue.push(Test(tid, i)))
+	        i++;
     }
     gettimeofday(&end, NULL);
     double tm = getdetlatimeofday(&begin, &end);
@@ -55,13 +56,13 @@ void consume()
     struct timeval begin, end;
     gettimeofday(&begin, NULL);
     unsigned int i = 0;
-    while(i < 2 * N)
+    while(i < N)
     {
         if(queue.pop(test))
-	{
-	   //test.display();
-	   i++;
-	}
+        {
+            // test.display();
+            i++;
+        }
     }
     gettimeofday(&end, NULL);
     double tm = getdetlatimeofday(&begin, &end);
@@ -70,11 +71,19 @@ void consume()
 
 int main(int argc, char const *argv[])
 {
+    queue.reset();
     std::thread producer1(produce);
     std::thread producer2(produce);
-    std::thread consumer(consume);
+    std::thread consumer1(consume);
+    std::thread consumer2(consume);
+
     producer1.join();
     producer2.join();
-    consumer.join();
+    consumer1.join();
+    consumer2.join();
+
     return 0;
 }
+// 
+// g++ --std=c++11 -O3  LockFreeQueueTest.cpp -o producer -lrt -pthread
+// g++ --std=c++11 -O3  LockFreeQueueTest.cpp -o consumer -lrt -pthread
